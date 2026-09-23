@@ -45,6 +45,13 @@ The report is hosted on a Fabric trial workspace; org-level tenant settings rest
 - Watch the walkthrough video: [`docs/screenshots/report-walkthrough.mp4`](docs/screenshots/report-walkthrough.mp4) for a full interactive demo of all 4 pages.
 - Open [`pbix/Ecommerce BI Report.pbix`](pbix/Ecommerce%20BI%20Report.pbix) in Power BI Desktop. *(Note: if the underlying semantic model is Direct Lake, this file may require a live connection back to the Fabric workspace to render data rather than working fully offline.)*
 
+## Known limitations
+
+- **On-time delivery counts undelivered orders as late.** In the notebook, `on_time` is `1` when the delivery date is on or before the estimated date, otherwise `0`. An order that was never delivered (cancelled, unavailable, still in transit) has no delivery date, so it gets `0` and is counted as late by **On-Time Delivery %**. **Avg Delivery Days**, on the other hand, skips those orders (the value is empty), so the two headline KPIs are not computed over the same set of orders. The fix is to set `on_time` to null for undelivered orders (or filter to delivered orders in the measure), then refresh the model.
+- **The on-time comparison uses the full timestamp.** If the estimated delivery date has no time of day (it is midnight in the Olist CSV as far as I know; I did not re-check it), an order delivered on the estimated day but after midnight counts as late. Comparing dates (`to_date`) instead would count it as on time.
+- **The key findings above could not be re-checked** when this section was written (the dataset is not in the repository). They are the values shown in the report, and the two points above may change the on-time rate.
+- `dim_date` is generated for 2016-01-01 to 2018-12-31, which covers this dataset; extend the range if newer data is loaded.
+
 ## Data source
 
 Dataset: [Brazilian E-Commerce Public Dataset by Olist](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce), used under its Kaggle license. All credit to Olist for the original data.
@@ -54,8 +61,8 @@ Dataset: [Brazilian E-Commerce Public Dataset by Olist](https://www.kaggle.com/d
 ```
 /pbix/                   → exported Power BI report (.pbix)
 /dax/measures.md          → all DAX measures with explanations
-/etl/                     → Fabric notebook used for cleaning/transformation
+/etl/                     → Fabric notebook that builds the clean tables (run top to bottom)
 /docs/architecture.png    → pipeline diagram
-/docs/screenshots/        → report screenshots / walkthrough GIF
+/docs/screenshots/        → report screenshots and the walkthrough video (mp4)
 README.md
 ```
